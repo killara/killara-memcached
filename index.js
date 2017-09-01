@@ -76,7 +76,7 @@ module.exports = class MemcachedStore extends EventEmitter {
           resolve(data);
         });
       });
-      if (data) {
+      if (!data) {
         return null;
       }
       const dataRaw = this.unserialize(data.toString());
