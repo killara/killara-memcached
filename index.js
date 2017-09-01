@@ -102,7 +102,7 @@ module.exports = class MemcachedStore extends EventEmitter {
     }
   }
 
-  async destory(sid) {
+  async destroy(sid) {
     try {
       await new Promise((resolve, reject) => {
         this.client.del(sid, err => {
