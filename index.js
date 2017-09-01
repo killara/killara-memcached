@@ -53,17 +53,17 @@ module.exports = class MemcachedStore extends EventEmitter {
       totalReconnectsSuccess: %s
       totalReconnectsFailed: %s
       totalDownTime: %s
-      `, [
-          detail.server,
-          detail.tokens,
-          detail.messages.join('\n'),
-          detail.failures,
-          detail.totalFailures,
-          detail.totalReconnectsAttempted,
-          detail.totalReconnectsSuccess,
-          detail.totalReconnectsFailed,
-          detail.totalDownTime,
-        ]));
+      `,
+        detail.server,
+        detail.tokens,
+        detail.messages.join('\n'),
+        detail.failures,
+        detail.totalFailures,
+        detail.totalReconnectsAttempted,
+        detail.totalReconnectsSuccess,
+        detail.totalReconnectsFailed,
+        detail.totalDownTime,
+      ));
     });
   }
 
@@ -72,14 +72,18 @@ module.exports = class MemcachedStore extends EventEmitter {
       const data = await new Promise((resolve, reject) => {
         this.client.get(sid, (err, data) => {
           if (err) return reject(err);
-          debug('get %s > %s', data || 'empty');
+          debug('get %s; %s', sid, data || 'empty');
           resolve(data);
         });
       });
-      debug('get %s successfully');
-      return this.unserialize(data.toString());
+      if (data) {
+        return null;
+      }
+      const dataRaw = this.unserialize(data.toString());
+      debug('get %s; %s successfully', sid, dataRaw);
+      return dataRaw;
     } catch (e) {
-      debug('get :%s > Error: %s', sid, e.message);
+      debug('get %s; Error: %s', sid, e.message);
       return null;
     }
   }
@@ -96,7 +100,7 @@ module.exports = class MemcachedStore extends EventEmitter {
           resolve();
         });
       });
-      debug('set %s successfully');
+      debug('set %s successfully', sid);
     } catch (e) {
       debug('set sid:%s failed. Error: %s', sid, e.message);
     }
@@ -111,7 +115,7 @@ module.exports = class MemcachedStore extends EventEmitter {
           resolve();
         });
       });
-      debug('del %s successfully');
+      debug('del %s successfully', sid);
     } catch (e) {
       debug('del %s failed. Error: %s', sid, e.message);
     }
