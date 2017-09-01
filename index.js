@@ -79,7 +79,7 @@ module.exports = class MemcachedStore extends EventEmitter {
       debug('get %s successfully');
       return this.unserialize(data.toString());
     } catch (e) {
-      debug('get :%s > Error: %s', [ sid, e.message ]);
+      debug('get :%s > Error: %s', sid, e.message);
       return null;
     }
   }
@@ -92,13 +92,13 @@ module.exports = class MemcachedStore extends EventEmitter {
       await new Promise((resolve, reject) => {
         this.client.set(sid, value, lifetime, err => {
           if (err) return reject(err);
-          debug('set %s value %s lifetime %s', [ sid, value, lifetime ]);
+          debug('set %s value %s lifetime %s', sid, value, lifetime);
           resolve();
         });
       });
       debug('set %s successfully');
     } catch (e) {
-      debug('set sid:%s failed. Error: %s', [ sid, e.message ]);
+      debug('set sid:%s failed. Error: %s', sid, e.message);
     }
   }
 
@@ -107,13 +107,13 @@ module.exports = class MemcachedStore extends EventEmitter {
       await new Promise((resolve, reject) => {
         this.client.del(sid, err => {
           if (err) return reject(err);
-          debug('del %s', [ sid ]);
+          debug('del %s', sid);
           resolve();
         });
       });
       debug('del %s successfully');
     } catch (e) {
-      debug('del %s failed. Error: %s', [ sid, e.message ]);
+      debug('del %s failed. Error: %s', sid, e.message);
     }
   }
 };
