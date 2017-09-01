@@ -1,6 +1,6 @@
 {
   "name": "killara-memcached",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "a wrapper that be used with laravel-session as a session store",
   "main": "index.js",
   "scripts": {
