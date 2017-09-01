@@ -80,7 +80,7 @@ module.exports = class MemcachedStore extends EventEmitter {
         return null;
       }
       const dataRaw = this.unserialize(data.toString());
-      debug('get %s; %s successfully', sid, dataRaw);
+      debug('get %s successfully', sid);
       return dataRaw;
     } catch (e) {
       debug('get %s; Error: %s', sid, e.message);
