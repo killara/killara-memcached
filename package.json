@@ -4,6 +4,7 @@
   "description": "a wrapper that be used with laravel-session as a session store",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint index.js --fix",
     "test": "jest"
   },
   "repository": {
