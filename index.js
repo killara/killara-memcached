@@ -1,9 +1,9 @@
 'use strict';
 
-const debug = require('debug')('killara-memcached');
+const debug = require('debug')('killara:memcached');
 const EventEmitter = require('events');
 const assert = require('assert');
-const Memcached = require('memcached');
+const Memcached = require('node_memcached');
 
 module.exports = class MemcachedStore extends EventEmitter {
 
@@ -11,59 +11,29 @@ module.exports = class MemcachedStore extends EventEmitter {
     super();
     options = options || {};
 
-    const serverLocationsHelpMessage = `
-      Should add serverLocations options to connect memcached.
-      For example:
-        String: 192.168.0.102:11211,
-        Array: [ '192.168.0.102:11211', '192.168.0.103:11211', '192.168.0.104:11211' ]
-        Object: { '192.168.0.102:11211': 1, '192.168.0.103:11211': 2, '192.168.0.104:11211': 1 }
-    `;
-
-    assert(options.serverLocations, serverLocationsHelpMessage);
-    options.maxKeySize = options.maxKeySize || 250; // the maximum key size allowed.
-    options.maxExpiration = options.maxExpiration || 2592000; // the maximum expiration time of keys (in seconds).
-    options.maxValue = options.maxValue || 1048576; // the maximum size of a value.
-    options.poolSize = options.poolSize || 10; // the maximum size of the connection pool.
-    options.algorithm = options.algorithm || 'md5'; // the hashing algorithm used to generate the hashRing values.
-    options.reconnect = options.reconnect || 18000000; // the time between reconnection attempts (in milliseconds).
-    options.timeout = options.timeout || 5000; // the time after which Memcached sends a connection timeout (in milliseconds).
-    options.retries = options.retries || 5; // the number of socket allocation retries per request.
-    options.failures = options.failures || 5; // the number of failed-attempts to a server before it is regarded as 'dead'.
-    options.retry = options.retry || 30000; // the time between a server failure and an attempt to set it up back in service.
-    options.remove = options.remove || false; // if true, authorizes the automatic removal of dead servers from the pool.
-    options.failOverServers = options.failOverServers || undefined; // an array of server_locations to replace servers that fail and that are removed from the consistent hashing scheme.
-    options.keyCompression = options.keyCompression || true; // whether to use md5 as hashing scheme when keys exceed maxKeySize.
-    options.idle = options.idle || 5000; // the idle timeout for the connections.
+    if (!options.client) {
+      debug('Init memcached client with host: %s, port: %d',
+        options.host || 'localhost', options.port || 11211);
+      this.client = Memcached.createClient(options.username, options.password);
+    } else {
+      this.client = options.client;
+    }
 
     // result serialize/unserialize
-    this.unserialize = options.unserialize || JSON.parse;
-    this.serialize = options.serialize || JSON.stringify;
+    this.serialize = (typeof options.serialize === 'function' && options.serialize) || JSON.stringify;
+    this.unserialize = (typeof options.unserialize === 'function' && options.unserialize) || JSON.parse;
 
-    this.client = new Memcached(options.serverLocations, options);
+    this.client.on('error', this.emit.bind(this, 'disconnect'));
+    this.client.on('end', this.emit.bind(this, 'disconnect'));
+    this.client.on('connect', this.emit.bind(this, 'connect'));
 
-    [ 'issue', 'failure', 'reconnecting', 'reconnect', 'remove' ].forEach(event => {
-      this.client.on(event, err => this.emit(event, err));
-      this.on(event, detail => debug(`
-      server: %s
-      tokens: %s
-      messages: %s
-      failures: %s
-      totalFailures: %s
-      totalReconnectsAttempted: %s
-      totalReconnectsSuccess: %s
-      totalReconnectsFailed: %s
-      totalDownTime: %s
-      `,
-        detail.server,
-        detail.tokens,
-        detail.messages.join('\n'),
-        detail.failures,
-        detail.totalFailures,
-        detail.totalReconnectsAttempted,
-        detail.totalReconnectsSuccess,
-        detail.totalReconnectsFailed,
-        detail.totalDownTime,
-      ));
+    this.on('disconnect', err => {
+      if (err) {
+        debug('disconnet: %s', err.toString());
+      }
+    });
+    this.on('connect', () => {
+      debug('connect successfully');
     });
   }
 
@@ -109,7 +79,7 @@ module.exports = class MemcachedStore extends EventEmitter {
   async destroy(sid) {
     try {
       await new Promise((resolve, reject) => {
-        this.client.del(sid, err => {
+        this.client.delete(sid, err => {
           if (err) return reject(err);
           debug('del %s', sid);
           resolve();
