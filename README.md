@@ -10,6 +10,14 @@ a wrapper that be used with laravel-session as a session store
 
 `npm i -S killara-memcached`
 
+## Options
+
+* `client`    memcached client (optional)
+* `host`      memcached connect host (without options.client)
+* `port`      memcached connect port (without options.client)
+* `username`  username (if set, support SASL auth)
+* `password`  password (if set, support SASL auth)
+
 ## LICENSE
 
 MIT License
